@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "Sistema de gestión de vehículos de Agróptimum",
   generator: "v0.app",
   icons: {
-    icon: "/icon.svg",              // 👈 ahora sí existe
+    icon: "/AG Cuadrado.svg",              // 👈 ahora sí existe
     shortcut: "/icon.svg",
   },
 }
