@@ -16,14 +16,13 @@ services:
 
     environment:
       NODE_ENV: production
-<<<<<<< HEAD
 
-=======
->>>>>>> 6c1cefd (Actualizo AgroFleet con todos los cambios más recientes)
+      # URL pública de tu app
       NEXT_PUBLIC_BASE_URL: https://agrofleet.agroptimum.com
+
+      # Supabase (las rellenamos desde Portainer)
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
 
