@@ -1,64 +1,10 @@
 "use client"
 
-<<<<<<< HEAD
-import { useEffect, useState } from "react"
-=======
 import { useEffect, useMemo, useRef, useState } from "react"
->>>>>>> 7249f49 (Initial commit with AgroFleet changes)
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 
-<<<<<<< HEAD
-interface Point {
-  vehicle_id: string
-  lat: number
-  lng: number
-  recorded_at: string
-}
-
-const icon = new L.Icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-})
-
-export default function AdminMapClient() {
-  const [points, setPoints] = useState<Point[]>([])
-
-  useEffect(() => {
-    fetch("/api/geo/latest")
-      .then((res) => res.json())
-      .then((data) => setPoints(data))
-  }, [])
-
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Mapa de Vehículos</h1>
-      <div className="h-[75vh] w-full border rounded-lg overflow-hidden">
-        <MapContainer center={[40.4168, -3.7038]} zoom={6} className="h-full w-full">
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap contributors'
-          />
-          {points.map((p) => (
-            <Marker key={p.vehicle_id} position={[p.lat, p.lng]} icon={icon}>
-              <Popup>
-                <div className="space-y-1 text-sm">
-                  <div>
-                    <strong>Vehículo:</strong> {p.vehicle_id}
-                  </div>
-                  <div>
-                    <strong>Último registro:</strong>{" "}
-                    {new Date(p.recorded_at).toLocaleString()}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
-      </div>
-=======
 type GeoPoint = {
   vehicle_registration: string
   lat: number
@@ -87,8 +33,8 @@ function ignitionLabel(v: GeoPoint["ignition"]) {
   if (v === false) return "OFF"
   if (typeof v === "string") {
     const s = v.toUpperCase()
-    if (s === "Y" || s === "YES" || s === "ON") return "ON"
-    if (s === "N" || s === "NO" || s === "OFF") return "OFF"
+    if (s === "Y" || s === "YES" || s === "ON" || s === "TRUE" || s === "1") return "ON"
+    if (s === "N" || s === "NO" || s === "OFF" || s === "FALSE" || s === "0") return "OFF"
   }
   return "—"
 }
@@ -121,7 +67,6 @@ export default function AdminMapClient() {
 
       const res = await fetch("/api/geo", { cache: "no-store" })
       const data = await res.json().catch(() => ({}))
-
       if (!res.ok) throw new Error(data?.error ?? `Error /api/geo (${res.status})`)
 
       if (!alive.current) return
@@ -143,7 +88,6 @@ export default function AdminMapClient() {
 
       const res = await fetch("/api/geo/refresh", { method: "POST" })
       const data = await res.json().catch(() => ({}))
-
       if (!res.ok) throw new Error(data?.error ?? `Error /api/geo/refresh (${res.status})`)
 
       await load()
@@ -158,6 +102,7 @@ export default function AdminMapClient() {
     load()
     const t = setInterval(load, 30000)
     return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -188,10 +133,16 @@ export default function AdminMapClient() {
       </div>
 
       <MapContainer center={center} zoom={7} style={{ height: "100%", width: "100%" }}>
-        <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer
+          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
         {points.map((p) => (
-          <Marker key={`${p.vehicle_registration}-${p.recorded_at}`} position={[p.lat, p.lng ?? p.lon]}>
+          <Marker
+            key={`${p.vehicle_registration}-${p.recorded_at}`}
+            position={[p.lat, p.lng ?? p.lon]}
+          >
             <Popup>
               <div className="space-y-1">
                 <div className="font-semibold">{p.vehicle_registration}</div>
@@ -200,13 +151,14 @@ export default function AdminMapClient() {
                 <div>
                   {p.street ?? ""} {p.town ?? ""}
                 </div>
-                <div className="text-xs opacity-70">{new Date(p.recorded_at).toLocaleString()}</div>
+                <div className="text-xs opacity-70">
+                  {new Date(p.recorded_at).toLocaleString()}
+                </div>
               </div>
             </Popup>
           </Marker>
         ))}
       </MapContainer>
->>>>>>> 7249f49 (Initial commit with AgroFleet changes)
     </div>
   )
 }
