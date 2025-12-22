@@ -123,3 +123,27 @@
     @apply bg-background text-foreground;
   }
 }
+<<<<<<< HEAD
+=======
+/* ───────── Leaflet: popup bonito ───────── */
+.geo-popup .leaflet-popup-content-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 16px !important;
+  padding: 0 !important;
+}
+
+.geo-popup .leaflet-popup-content {
+  margin: 0 !important;
+}
+
+.geo-popup .leaflet-popup-tip {
+  display: none !important;
+}
+
+/* Opcional: quita borde/margen del popup en general */
+.geo-popup.leaflet-popup {
+  margin-bottom: 12px;
+}
+
+>>>>>>> 7249f49 (Initial commit with AgroFleet changes)

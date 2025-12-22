@@ -5,6 +5,11 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+<<<<<<< HEAD
+=======
+import { MapPin } from "lucide-react"
+
+>>>>>>> 7249f49 (Initial commit with AgroFleet changes)
 import {
   LayoutDashboard,
   Car,
@@ -16,7 +21,13 @@ import {
   Menu,
   X,
   Megaphone,
+<<<<<<< HEAD
 } from "lucide-react"
+=======
+  Route, // ✅ AÑADIR ESTO
+} from "lucide-react"
+
+>>>>>>> 7249f49 (Initial commit with AgroFleet changes)
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { ComunicadosBadge } from "./comunicados-badge"
 
@@ -27,10 +38,19 @@ const navigation = [
   { name: "Mantenimiento", href: "/admin/maintenance", icon: Wrench },
   { name: "Multas", href: "/admin/fines", icon: AlertCircle },
   { name: "Empleados", href: "/admin/employees", icon: Users },
+<<<<<<< HEAD
   // 👇 NUEVO
   { name: "Comunicados", href: "/admin/comunicados", icon: Megaphone },
 ]
 
+=======
+  { name: "Localización", href: "/admin/localizacion", icon: MapPin },
+  { name: "Historial", href: "/admin/history", icon: Route }, // ✅
+  { name: "Comunicados", href: "/admin/comunicados", icon: Megaphone },
+]
+
+
+>>>>>>> 7249f49 (Initial commit with AgroFleet changes)
 export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
