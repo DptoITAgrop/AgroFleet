@@ -4,8 +4,10 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import Image from "next/image"
+
 import { Button } from "@/components/ui/button"
-import { MapPin } from "lucide-react"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import { ComunicadosBadge } from "./comunicados-badge"
 
 import {
   LayoutDashboard,
@@ -18,9 +20,9 @@ import {
   Menu,
   X,
   Megaphone,
+  MapPin,
+  Route,
 } from "lucide-react"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
-import { ComunicadosBadge } from "./comunicados-badge"
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -29,12 +31,8 @@ const navigation = [
   { name: "Mantenimiento", href: "/admin/maintenance", icon: Wrench },
   { name: "Multas", href: "/admin/fines", icon: AlertCircle },
   { name: "Empleados", href: "/admin/employees", icon: Users },
-  // 👇 NUEVO
-  { name: "Comunicados", href: "/admin/comunicados", icon: Megaphone },
-]
-
   { name: "Localización", href: "/admin/localizacion", icon: MapPin },
-  { name: "Historial", href: "/admin/history", icon: Route }, // ✅
+  { name: "Historial", href: "/admin/history", icon: Route },
   { name: "Comunicados", href: "/admin/comunicados", icon: Megaphone },
 ]
 
@@ -85,14 +83,10 @@ export function AdminSidebar() {
                 <Link key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
                   <Button
                     variant={isActive ? "secondary" : "ghost"}
-                    className={`w-full justify-start ${
-                      isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
-                    }`}
+                    className={`w-full justify-start ${isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""}`}
                   >
                     <item.icon className="w-5 h-5 mr-3" />
                     {item.name}
-
-                    {/* badge sólo para Comunicados */}
                     {isComunicados && <ComunicadosBadge />}
                   </Button>
                 </Link>

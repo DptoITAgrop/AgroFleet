@@ -7,9 +7,7 @@ export const runtime = "nodejs"
 export async function GET() {
   const supabase = await getSupabaseServerClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const { data: u } = await supabase.from("usuarios").select("is_admin").eq("id", user.id).maybeSingle()
@@ -17,8 +15,8 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("geolocalizacion")
-    .select("vehicle_registration, lat, lon, speed, direction, ignition, street, town, recorded_at")
-    .order("recorded_at", { ascending: false })
+    .select("vehicle_registration, lat, lon, speed, direction, ignition, street, town, recorded_at, radius_timestamp")
+    .order("radius_timestamp", { ascending: false })
     .limit(2000)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -32,3 +30,4 @@ export async function GET() {
 
   return NextResponse.json(Array.from(latest.values()))
 }
+

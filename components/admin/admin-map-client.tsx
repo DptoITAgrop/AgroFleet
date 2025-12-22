@@ -12,13 +12,13 @@ type GeoPoint = {
   lng?: number
   speed?: number | null
   direction?: number | null
-  ignition?: boolean | null
+  ignition?: any
   street?: string | null
   town?: string | null
-  recorded_at: string
+  recorded_at: string            // ISO UTC
+  time_text?: string | null      // "13:06\n23/12/2025" (como Postman)
 }
 
-// ✅ Fix iconos Leaflet (Next/webpack)
 const leafletIconFix = () => {
   // @ts-ignore
   delete L.Icon.Default.prototype._getIconUrl
@@ -29,9 +29,20 @@ const leafletIconFix = () => {
   })
 }
 
+function ignitionLabel(v: any) {
+  if (v === true) return "ON"
+  if (v === false) return "OFF"
+  if (typeof v === "string") {
+    const s = v.trim().toUpperCase()
+    if (["Y", "YES", "ON", "TRUE", "1"].includes(s)) return "ON"
+    if (["N", "NO", "OFF", "FALSE", "0"].includes(s)) return "OFF"
+  }
+  return "—"
+}
+
 function normalizePoints(data: any): GeoPoint[] {
-  if (!Array.isArray(data)) return []
-  return data
+  const arr = Array.isArray(data) ? data : Array.isArray(data?.points) ? data.points : []
+  return arr
     .map((p: any) => ({
       vehicle_registration: String(p.vehicle_registration ?? ""),
       lat: Number(p.lat),
@@ -42,7 +53,8 @@ function normalizePoints(data: any): GeoPoint[] {
       ignition: p.ignition ?? null,
       street: p.street ?? null,
       town: p.town ?? null,
-      recorded_at: String(p.recorded_at ?? new Date().toISOString()),
+      recorded_at: String(p.recorded_at ?? ""),
+      time_text: p.time_text != null ? String(p.time_text) : null,
     }))
     .filter(
       (p: GeoPoint) =>
@@ -56,13 +68,11 @@ function normalizePoints(data: any): GeoPoint[] {
 
 export default function AdminMapClient() {
   const [points, setPoints] = useState<GeoPoint[]>([])
-  const [loading, setLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
 
   const abortRef = useRef<AbortController | null>(null)
-  const inFlightRef = useRef(false)
 
   useEffect(() => {
     leafletIconFix()
@@ -73,131 +83,87 @@ export default function AdminMapClient() {
     return p ? [p.lat, p.lng ?? p.lon] : [40.4168, -3.7038]
   }, [points])
 
-  const load = useCallback(async () => {
-    if (inFlightRef.current) return
-    inFlightRef.current = true
-
+  const refreshLive = useCallback(async () => {
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
 
     try {
-      setLoading(true)
-      setError(null)
-
-      const res = await fetch("/api/geo", {
-        cache: "no-store",
-        signal: controller.signal,
-        headers: { Accept: "application/json" },
-      })
-
-      const data = await res.json().catch(() => ({}))
-
-      if (!res.ok) {
-        throw new Error(data?.error ?? `Error cargando /api/geo (${res.status})`)
-      }
-
-      const normalized = normalizePoints(data)
-      setPoints(normalized)
-      setLastUpdated(new Date().toLocaleString())
-    } catch (e: any) {
-      if (e?.name === "AbortError") return
-      setError(e?.message ?? "Error cargando posiciones")
-      setPoints([])
-    } finally {
-      setLoading(false)
-      inFlightRef.current = false
-    }
-  }, [])
-
-  const refresh = useCallback(async () => {
-    // 1) sincroniza (POST /api/geo/refresh)
-    // 2) recarga tabla (GET /api/geo)
-    try {
       setSyncing(true)
       setError(null)
 
-      const res = await fetch("/api/geo/refresh", {
+      const res = await fetch(`/api/geo/live?t=${Date.now()}`, {
         method: "POST",
+        cache: "no-store",
         headers: { Accept: "application/json" },
+        signal: controller.signal,
       })
 
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        throw new Error(data?.error ?? `Error refrescando /api/geo/refresh (${res.status})`)
-      }
+      if (!res.ok) throw new Error(data?.error ?? `Error refrescando /api/geo/live (${res.status})`)
 
-      // Si tu endpoint devuelve { inserted }, lo mostramos en el timestamp
-      const insertedInfo =
-        typeof data?.inserted === "number" ? ` · insertados: ${data.inserted}` : ""
+      setPoints(normalizePoints(data))
+      const insertedInfo = typeof data?.inserted === "number" ? ` · insertados: ${data.inserted}` : ""
       setLastUpdated(`${new Date().toLocaleString()}${insertedInfo}`)
-
-      await load()
     } catch (e: any) {
+      if (e?.name === "AbortError") return
       setError(e?.message ?? "Error refrescando")
     } finally {
       setSyncing(false)
     }
-  }, [load])
+  }, [])
 
   useEffect(() => {
-    load()
-    const t = setInterval(load, 30000)
-    return () => {
-      clearInterval(t)
-      abortRef.current?.abort()
-    }
-  }, [load])
+    refreshLive()
+    return () => abortRef.current?.abort()
+  }, [refreshLive])
 
   return (
     <div className="h-[70vh] w-full rounded-xl overflow-hidden border bg-white">
-      {/* Barra superior */}
       <div className="flex items-center justify-between px-3 py-2 border-b bg-card">
         <div className="text-sm text-muted-foreground">
-          {loading ? "Cargando..." : `Posiciones: ${points.length}`}
+          {syncing ? "Cargando..." : `Posiciones: ${points.length}`}
           {lastUpdated ? <span className="ml-2 opacity-70">· {lastUpdated}</span> : null}
           {error ? <span className="ml-2 text-destructive">{error}</span> : null}
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={load}
-            className="px-3 py-1.5 text-sm rounded-md border hover:bg-muted disabled:opacity-50"
-            disabled={loading || syncing}
-            title="Recargar desde Supabase"
-          >
-            {loading ? "Cargando..." : "Recargar"}
-          </button>
-        </div>
+        <button
+          onClick={refreshLive}
+          className="px-3 py-1.5 text-sm rounded-md border hover:bg-muted disabled:opacity-50"
+          disabled={syncing}
+          title="Consulta la API en tiempo real y guarda en histórico"
+        >
+          {syncing ? "Actualizando..." : "Recargar"}
+        </button>
       </div>
 
       <MapContainer center={center} zoom={7} style={{ height: "100%", width: "100%" }}>
-        <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-        {points.map((p) => (
-          <Marker
-            key={`${p.vehicle_registration}-${p.recorded_at}`}
-            position={[p.lat, p.lng ?? p.lon]}
-          >
-            <Popup>
-              <div className="space-y-1">
-                <div className="font-semibold">{p.vehicle_registration}</div>
-                <div>Ignición: {p.ignition ? "ON" : "OFF"}</div>
-                <div>Velocidad: {p.speed ?? "—"}</div>
-                <div>Dirección: {p.direction ?? "—"}</div>
-                <div>
-                  {p.street ?? ""} {p.town ?? ""}
+        {points.map((p) => {
+          const when = (p.time_text && p.time_text.trim().length > 0)
+            ? p.time_text
+            : new Date(p.recorded_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })
+
+          return (
+            <Marker key={`${p.vehicle_registration}-${p.recorded_at}`} position={[p.lat, p.lng ?? p.lon]}>
+              <Popup>
+                <div className="space-y-1">
+                  <div className="font-semibold">{p.vehicle_registration}</div>
+                  <div>Ignición: {ignitionLabel(p.ignition)}</div>
+                  <div>Velocidad: {p.speed ?? "—"}</div>
+                  <div>Dirección: {p.direction ?? "—"}</div>
+                  <div>{p.street ?? ""} {p.town ?? ""}</div>
+
+                  {/* EXACTO como Postman */}
+                  <div className="text-xs opacity-70" style={{ whiteSpace: "pre-line" }}>
+                    {when}
+                  </div>
                 </div>
-                <div className="text-xs opacity-70">
-                  {new Date(p.recorded_at).toLocaleString()}
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+              </Popup>
+            </Marker>
+          )
+        })}
       </MapContainer>
     </div>
   )
