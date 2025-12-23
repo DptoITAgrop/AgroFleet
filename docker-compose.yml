@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   web:
     build:
@@ -10,7 +8,6 @@ services:
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
 
     container_name: fleet-manager-web
-
     ports:
       - "8089:3000"
 
@@ -25,5 +22,11 @@ services:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+
+      # ✅ Radius/Velocity (runtime)
+      RADIUS_BASE_URL: ${RADIUS_BASE_URL}
+      RADIUS_LIVE_POSITIONS_PATH: ${RADIUS_LIVE_POSITIONS_PATH}
+      RADIUS_CUSTOMER_ID: ${RADIUS_CUSTOMER_ID}
+      RADIUS_BEARER_TOKEN: ${RADIUS_BEARER_TOKEN}
 
     restart: unless-stopped
